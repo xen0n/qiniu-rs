@@ -6,3 +6,4 @@ authors = ["Wang Xuerui <git@xen0n.name>"]
 [dependencies]
 base64 = "0.7.0"
 ring = "0.12.1"
+url = "1.5.1"

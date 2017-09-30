@@ -1,5 +1,6 @@
 use base64;
 use ring;
+use url;
 
 
 pub struct QiniuSigner<'a> {
@@ -18,11 +19,17 @@ impl<'a> QiniuSigner<'a> {
         }
     }
 
-    pub fn sign<S: AsRef<[u8]>, T: AsRef<[u8]>>(&'a self, path: S, body: T) -> String {
+    pub fn sign(&'a self, url: &url::Url, body: Option<&[u8]>) -> String {
         let mut ctx = ring::hmac::SigningContext::with_key(&self.sk);
-        ctx.update(path.as_ref());
+        ctx.update(url.path().as_bytes());
+        if let Some(qs) = url.query() {
+            ctx.update(b"?");
+            ctx.update(qs.as_bytes());
+        }
         ctx.update(b"\n");
-        ctx.update(body.as_ref());
+        if let Some(body) = body {
+            ctx.update(body);
+        }
 
         let digest = ctx.sign();
         let digest = digest.as_ref();
@@ -47,7 +54,8 @@ mod tests {
     fn test_sign() {
         let x = QiniuSigner::new("MY_ACCESS_KEY", "MY_SECRET_KEY");
 
-        let path = "/move/bmV3ZG9jczpmaW5kX21hbi50eHQ=/bmV3ZG9jczpmaW5kLm1hbi50eHQ=";
-        assert_eq!(x.sign(path, b""), "MY_ACCESS_KEY:FXsYh0wKHYPEsIAgdPD9OfjkeEM=");
+        let url = "https://rs.qiniu.com/move/bmV3ZG9jczpmaW5kX21hbi50eHQ=/bmV3ZG9jczpmaW5kLm1hbi50eHQ=";
+        let url = url::Url::parse(url).unwrap();
+        assert_eq!(x.sign(&url, None), "MY_ACCESS_KEY:FXsYh0wKHYPEsIAgdPD9OfjkeEM=");
     }
 }
