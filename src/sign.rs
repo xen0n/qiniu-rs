@@ -3,23 +3,23 @@ use ring;
 use url;
 
 
-pub struct QiniuSigner<'a> {
-    ak: &'a str,
+pub struct QiniuSigner {
+    ak: String,
     sk: ring::hmac::SigningKey,
 }
 
 
-impl<'a> QiniuSigner<'a> {
-    pub fn new(ak: &'a str, sk: &'a str) -> QiniuSigner<'a> {
-        let key = ring::hmac::SigningKey::new(&ring::digest::SHA1, sk.as_bytes());
+impl QiniuSigner {
+    pub fn new<S: AsRef<str>, T: AsRef<str>>(ak: S, sk: T) -> QiniuSigner {
+        let key = ring::hmac::SigningKey::new(&ring::digest::SHA1, sk.as_ref().as_bytes());
 
         QiniuSigner {
-            ak: ak,
+            ak: ak.as_ref().to_string(),
             sk: key,
         }
     }
 
-    pub fn sign(&'a self, url: &url::Url, body: Option<&[u8]>) -> String {
+    pub fn sign(&self, url: &url::Url, body: Option<&[u8]>) -> String {
         let mut ctx = ring::hmac::SigningContext::with_key(&self.sk);
         ctx.update(url.path().as_bytes());
         if let Some(qs) = url.query() {
@@ -35,7 +35,7 @@ impl<'a> QiniuSigner<'a> {
         let digest = digest.as_ref();
 
         {
-            let mut tmp = String::from(self.ak);
+            let mut tmp = self.ak.clone();
             tmp.push(':');
             base64::encode_config_buf(digest, base64::URL_SAFE, &mut tmp);
 
