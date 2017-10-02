@@ -1,12 +1,10 @@
-mod buckets;
-
-
 use futures::prelude::*;
 use hyper;
 use serde_json;
 
 use super::errors::*;
 use super::provider;
+use super::request;
 
 
 pub struct QiniuStorageClient<'a, T: 'a> {
@@ -22,7 +20,11 @@ impl<'a, T: hyper::client::Connect> QiniuStorageClient<'a, T> {
     }
 
     pub fn list_buckets(&self) -> Box<Future<Item=Vec<String>, Error=Error>> {
-        let req = buckets::list_buckets(self.provider);
+        let req = request::QiniuRequest::new(
+            hyper::Method::Get,
+            self.provider.hosts().rs().join("buckets").unwrap(),
+            None,
+            ).unwrap();
 
         let x = self.provider.execute(req);
         let x = x.map_err(|e| e.into());
