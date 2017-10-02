@@ -14,6 +14,8 @@ pub struct QiniuClient<T> {
 
 pub struct QiniuHosts {
     rs: url::Url,
+    rsf: url::Url,
+    api: url::Url,
 }
 
 
@@ -21,6 +23,8 @@ impl Default for QiniuHosts {
     fn default() -> QiniuHosts {
         QiniuHosts {
             rs: "https://rs.qiniu.com".parse().unwrap(),
+            rsf: "https://rsf.qiniu.com".parse().unwrap(),
+            api: "https://api.qiniu.com".parse().unwrap(),
         }
     }
 }
@@ -29,6 +33,14 @@ impl Default for QiniuHosts {
 impl QiniuHosts {
     pub fn rs(&self) -> &url::Url {
         &self.rs
+    }
+
+    pub fn rsf(&self) -> &url::Url {
+        &self.rsf
+    }
+
+    pub fn api(&self) -> &url::Url {
+        &self.api
     }
 }
 
