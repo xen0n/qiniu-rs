@@ -73,6 +73,13 @@ impl QiniuClient {
 
         Ok(self.client.execute(ll_req))
     }
+
+    #[cfg(feature = "sync-api")]
+    pub fn execute(&self, req: request::QiniuRequest) -> Result<reqwest::Response> {
+        let ll_req = req.into_lowlevel(self)?;
+
+        Ok(self.client.execute(ll_req)?)
+    }
 }
 
 

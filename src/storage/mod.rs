@@ -38,6 +38,12 @@ impl<'a> QiniuStorageClient<'a> {
 
         x
     }
+
+    #[cfg(feature = "sync-api")]
+    pub fn list_buckets(&self) -> Result<Vec<String>> {
+        let req = self.req_list_buckets();
+        Ok(self.provider.execute(req)?.json()?)
+    }
 }
 
 
@@ -117,5 +123,18 @@ impl<'a> QiniuStorageClient<'a> {
         let x = x.and_then(|mut x| x.json()).map_err(|e| e.into());
 
         x
+    }
+
+    #[cfg(feature = "sync-api")]
+    pub fn bucket_list<'b: 'a>(&'a self,
+                               bucket: Cow<'b, str>,
+                               limit: Option<usize>,
+                               prefix: Option<&'b str>,
+                               delimiter: Option<&'b str>,
+                               marker: Option<&'b str>,
+                               ) -> Result<ListResponse>
+    {
+        let req = self.req_bucket_list(bucket, limit, prefix, delimiter, marker);
+        Ok(self.provider.execute(req)?.json()?)
     }
 }

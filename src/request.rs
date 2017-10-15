@@ -39,7 +39,8 @@ impl QiniuRequest {
         let builder = builder.header(reqwest::header::Authorization(auth_hdr));
 
         let builder = if let Some(body) = self.body {
-            builder.body(body)
+            // TODO
+            builder.body(body.to_vec())
         } else {
             builder
         };
