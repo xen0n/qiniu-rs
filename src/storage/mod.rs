@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use futures::prelude::*;
 
 use super::errors::*;
@@ -59,7 +61,7 @@ pub struct ListBucketEntry {
 
 impl<'a> QiniuStorageClient<'a> {
     pub fn bucket_list<'b: 'a>(&'a self,
-                               bucket: &'b str,
+                               bucket: Cow<'b, str>,
                                limit: Option<usize>,
                                prefix: Option<&'b str>,
                                delimiter: Option<&'b str>,
@@ -71,7 +73,7 @@ impl<'a> QiniuStorageClient<'a> {
             {
                 let mut qs = tmp.query_pairs_mut();
 
-                qs.append_pair("bucket", bucket);
+                qs.append_pair("bucket", bucket.as_ref());
                 if let Some(limit) = limit {
                     qs.append_pair("limit", &format!("{}", limit));
                 }
