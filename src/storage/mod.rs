@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 
+#[cfg(feature = "async-api")]
 use futures::prelude::*;
 
 use super::errors::*;
@@ -20,13 +21,17 @@ impl<'a> QiniuStorageClient<'a> {
         }
     }
 
-    pub fn list_buckets(&self) -> impl Future<Item=Vec<String>, Error=Error> {
-        let req = request::QiniuRequest::new(
+    fn req_list_buckets(&self) -> request::QiniuRequest {
+        request::QiniuRequest::new(
             reqwest::Method::Get,
             self.provider.hosts().rs().join("buckets").unwrap(),
             None,
-            ).unwrap();
+            ).unwrap()
+    }
 
+    #[cfg(feature = "async-api")]
+    pub fn list_buckets(&self) -> impl Future<Item=Vec<String>, Error=Error> {
+        let req = self.req_list_buckets();
         // TODO: fix this unwrap
         let x = self.provider.execute(req).unwrap();
         let x = x.and_then(|mut x| x.json()).map_err(|e| e.into());
@@ -60,13 +65,13 @@ pub struct ListBucketEntry {
 
 
 impl<'a> QiniuStorageClient<'a> {
-    pub fn bucket_list<'b: 'a>(&'a self,
+    fn req_bucket_list<'b: 'a>(&'a self,
                                bucket: Cow<'b, str>,
                                limit: Option<usize>,
                                prefix: Option<&'b str>,
                                delimiter: Option<&'b str>,
                                marker: Option<&'b str>,
-                               ) -> impl Future<Item=ListResponse, Error=Error>
+                               ) -> request::QiniuRequest
     {
         let url = {
             let mut tmp = self.provider.hosts().rsf().join("list").unwrap();
@@ -89,12 +94,24 @@ impl<'a> QiniuStorageClient<'a> {
             }
             tmp
         };
-        let req = request::QiniuRequest::new(
+
+        request::QiniuRequest::new(
             reqwest::Method::Post,
             url,
             None,
-            ).unwrap();
+            ).unwrap()
+    }
 
+    #[cfg(feature = "async-api")]
+    pub fn bucket_list<'b: 'a>(&'a self,
+                               bucket: Cow<'b, str>,
+                               limit: Option<usize>,
+                               prefix: Option<&'b str>,
+                               delimiter: Option<&'b str>,
+                               marker: Option<&'b str>,
+                               ) -> impl Future<Item=ListResponse, Error=Error>
+    {
+        let req = self.req_bucket_list(bucket, limit, prefix, delimiter, marker);
         // TODO: fix this unwrap
         let x = self.provider.execute(req).unwrap();
         let x = x.and_then(|mut x| x.json()).map_err(|e| e.into());

@@ -1,6 +1,8 @@
+#[cfg(feature = "async-api")]
 pub use self::impl_async::*;
 
 
+#[cfg(feature = "async-api")]
 mod impl_async {
     pub use reqwest::Error;
     pub use reqwest::Method;

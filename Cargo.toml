@@ -3,6 +3,11 @@ name = "qiniu"
 version = "0.1.0"
 authors = ["Wang Xuerui <git@xen0n.name>"]
 
+[features]
+default = ["async-api"]
+async-api = []
+sync-api = []
+
 [dependencies]
 base64 = "0.7.0"
 bytes = "0.4.5"
