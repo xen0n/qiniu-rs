@@ -1,3 +1,4 @@
+extern crate futures;
 extern crate hyper;
 extern crate hyper_tls;
 extern crate tokio_core;
@@ -5,6 +6,8 @@ extern crate tokio_core;
 extern crate qiniu;
 
 use std::env;
+
+use futures::Future;
 
 
 fn main() {
@@ -21,5 +24,17 @@ fn main() {
     let kodo = qiniu::storage::QiniuStorageClient::new(&client);
 
     let req = kodo.list_buckets();
-    println!("{:?}", reactor.run(req));
+    let req = req.and_then(|r| {
+        println!("list buckets response = {:?}", r);
+
+        let test_bucket_name = &r[0];
+        kodo.bucket_list(test_bucket_name, None, None, None, None)
+    });
+    let req = req.and_then(|list| {
+        println!("list inside bucket = {:?}", list);
+
+        Ok(())
+    });
+
+    reactor.run(req).unwrap();
 }
