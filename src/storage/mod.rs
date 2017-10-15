@@ -1,37 +1,35 @@
 use futures::prelude::*;
-use hyper;
-use serde_json;
 
 use super::errors::*;
 use super::provider;
 use super::request;
+use super::reqwest_compat as reqwest;
 
 
-pub struct QiniuStorageClient<'a, T: 'a> {
-    provider: &'a provider::QiniuClient<T>,
+pub struct QiniuStorageClient<'a> {
+    provider: &'a provider::QiniuClient,
 }
 
 
-impl<'a, T: hyper::client::Connect> QiniuStorageClient<'a, T> {
-    pub fn new(provider: &'a provider::QiniuClient<T>) -> QiniuStorageClient<'a, T> {
+impl<'a> QiniuStorageClient<'a> {
+    pub fn new(provider: &'a provider::QiniuClient) -> QiniuStorageClient<'a> {
         QiniuStorageClient {
             provider: provider,
         }
     }
 
-    pub fn list_buckets(&self) -> Box<Future<Item=Vec<String>, Error=Error>> {
+    pub fn list_buckets(&self) -> impl Future<Item=Vec<String>, Error=Error> {
         let req = request::QiniuRequest::new(
-            hyper::Method::Get,
+            reqwest::Method::Get,
             self.provider.hosts().rs().join("buckets").unwrap(),
             None,
             ).unwrap();
 
-        let x = self.provider.execute(req);
-        let x = x.map_err(|e| e.into());
-        let x = x.and_then(|res| res.body().concat2().map_err(|e| e.into()));
-        let x = x.and_then(|body| serde_json::from_slice(&body).map_err(|e| e.into()));
+        // TODO: fix this unwrap
+        let x = self.provider.execute(req).unwrap();
+        let x = x.and_then(|mut x| x.json()).map_err(|e| e.into());
 
-        Box::new(x)
+        x
     }
 }
 
@@ -59,14 +57,14 @@ pub struct ListBucketEntry {
 }
 
 
-impl<'a, T: hyper::client::Connect> QiniuStorageClient<'a, T> {
+impl<'a> QiniuStorageClient<'a> {
     pub fn bucket_list<'b: 'a>(&'a self,
                                bucket: &'b str,
                                limit: Option<usize>,
                                prefix: Option<&'b str>,
                                delimiter: Option<&'b str>,
                                marker: Option<&'b str>,
-                               ) -> Box<Future<Item=ListResponse, Error=Error>>
+                               ) -> impl Future<Item=ListResponse, Error=Error>
     {
         let url = {
             let mut tmp = self.provider.hosts().rsf().join("list").unwrap();
@@ -90,16 +88,15 @@ impl<'a, T: hyper::client::Connect> QiniuStorageClient<'a, T> {
             tmp
         };
         let req = request::QiniuRequest::new(
-            hyper::Method::Post,
+            reqwest::Method::Post,
             url,
             None,
             ).unwrap();
 
-        let x = self.provider.execute(req);
-        let x = x.map_err(|e| e.into());
-        let x = x.and_then(|res| res.body().concat2().map_err(|e| e.into()));
-        let x = x.and_then(|body| serde_json::from_slice(&body).map_err(|e| e.into()));
+        // TODO: fix this unwrap
+        let x = self.provider.execute(req).unwrap();
+        let x = x.and_then(|mut x| x.json()).map_err(|e| e.into());
 
-        Box::new(x)
+        x
     }
 }

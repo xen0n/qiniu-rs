@@ -1,13 +1,14 @@
-use hyper;
 use url;
 
+use super::errors::*;
 use super::sign;
 use super::request;
+use super::reqwest_compat as reqwest;
 
 
-pub struct QiniuClient<T> {
+pub struct QiniuClient {
     signer: sign::QiniuSigner,
-    client: hyper::Client<T, hyper::Body>,
+    client: reqwest::Client,
 
     hosts: QiniuHosts,
 }
@@ -45,8 +46,8 @@ impl QiniuHosts {
 }
 
 
-impl<T: hyper::client::Connect> QiniuClient<T> {
-    pub fn new<AK, SK>(client: hyper::Client<T, hyper::Body>, ak: AK, sk: SK) -> QiniuClient<T>
+impl QiniuClient {
+    pub fn new<AK, SK>(client: reqwest::Client, ak: AK, sk: SK) -> QiniuClient
         where AK: AsRef<str>, SK: AsRef<str>
     {
         let signer = sign::QiniuSigner::new(ak, sk);
@@ -58,15 +59,23 @@ impl<T: hyper::client::Connect> QiniuClient<T> {
         }
     }
 
-    pub fn execute(&self, req: request::QiniuRequest) -> hyper::client::FutureResponse {
-        let hyper_req = req.into_hyper(&self.signer);
+    pub(crate) fn signer(&self) -> &sign::QiniuSigner {
+        &self.signer
+    }
 
-        self.client.request(hyper_req)
+    pub(crate) fn reqwest_client(&self) -> &reqwest::Client {
+        &self.client
+    }
+
+    pub fn execute(&self, req: request::QiniuRequest) -> Result<impl ::futures::Future<Item=reqwest::Response, Error=reqwest::Error>> {
+        let ll_req = req.into_lowlevel(self)?;
+
+        Ok(self.client.execute(ll_req))
     }
 }
 
 
-impl<T> QiniuClient<T> {
+impl QiniuClient {
     pub fn hosts(&self) -> &QiniuHosts {
         &self.hosts
     }

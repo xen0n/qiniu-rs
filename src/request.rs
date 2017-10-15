@@ -1,21 +1,21 @@
 use bytes;
-use hyper;
 use url;
 
-use super::sign;
+use super::provider;
+use super::reqwest_compat as reqwest;
 
 use super::errors::*;
 
 
 pub struct QiniuRequest {
-    method: hyper::Method,
+    method: reqwest::Method,
     uri: url::Url,
     body: Option<bytes::Bytes>,
 }
 
 
 impl QiniuRequest {
-    pub fn new<S: AsRef<str>>(method: hyper::Method, uri: S, body: Option<bytes::Bytes>) -> Result<QiniuRequest> {
+    pub fn new<S: AsRef<str>>(method: reqwest::Method, uri: S, body: Option<bytes::Bytes>) -> Result<QiniuRequest> {
         Ok(QiniuRequest {
             method: method,
             uri: url::Url::parse(uri.as_ref())?,
@@ -23,27 +23,27 @@ impl QiniuRequest {
         })
     }
 
-    pub (crate) fn into_hyper(self, signer: &sign::QiniuSigner) -> hyper::Request<hyper::Body> {
-        let mut req = hyper::Request::new(self.method, self.uri.as_ref().parse().unwrap());
+    pub (crate) fn into_lowlevel(self, client: &provider::QiniuClient) -> Result<reqwest::Request> {
+        let mut builder = client.reqwest_client().request(self.method, self.uri.as_ref());
 
         // sign request
-        {
-            let auth_hdr = {
-                let mut tmp = String::from("QBox ");
-                // this clone is lightweight (maybe? due to the Arc inside)
-                let auth = signer.sign(&self.uri, self.body.clone().as_ref().map(|buf| &buf[..]));
-                tmp.push_str(&auth);
-                tmp
-            };
+        let auth_hdr = {
+            let signer = client.signer();
+            let mut tmp = String::from("QBox ");
+            // this clone is lightweight (maybe? due to the Arc inside)
+            let auth = signer.sign(&self.uri, self.body.clone().as_ref().map(|buf| &buf[..]));
+            tmp.push_str(&auth);
+            tmp
+        };
 
-            let headers = req.headers_mut();
-            headers.set(hyper::header::Authorization(auth_hdr));
-        }
+        let builder = builder.header(reqwest::header::Authorization(auth_hdr));
 
-        if let Some(body) = self.body {
-            req.set_body(body);
-        }
+        let builder = if let Some(body) = self.body {
+            builder.body(body)
+        } else {
+            builder
+        };
 
-        req
+        Ok(builder.build()?)
     }
 }
