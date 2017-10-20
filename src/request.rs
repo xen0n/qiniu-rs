@@ -15,7 +15,11 @@ pub struct QiniuRequest {
 
 
 impl QiniuRequest {
-    pub fn new<S: AsRef<str>>(method: reqwest::Method, uri: S, body: Option<bytes::Bytes>) -> Result<QiniuRequest> {
+    pub fn new<S: AsRef<str>>(
+        method: reqwest::Method,
+        uri: S,
+        body: Option<bytes::Bytes>,
+    ) -> Result<QiniuRequest> {
         Ok(QiniuRequest {
             method: method,
             uri: url::Url::parse(uri.as_ref())?,
@@ -23,8 +27,11 @@ impl QiniuRequest {
         })
     }
 
-    pub (crate) fn into_lowlevel(self, client: &provider::QiniuClient) -> Result<reqwest::Request> {
-        let mut builder = client.reqwest_client().request(self.method, self.uri.as_ref());
+    pub(crate) fn into_lowlevel(self, client: &provider::QiniuClient) -> Result<reqwest::Request> {
+        let mut builder = client.reqwest_client().request(
+            self.method,
+            self.uri.as_ref(),
+        );
 
         // sign request
         let auth_hdr = {

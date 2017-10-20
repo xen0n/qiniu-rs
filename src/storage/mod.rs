@@ -16,9 +16,7 @@ pub struct QiniuStorageClient<'a> {
 
 impl<'a> QiniuStorageClient<'a> {
     pub fn new(provider: &'a provider::QiniuClient) -> QiniuStorageClient<'a> {
-        QiniuStorageClient {
-            provider: provider,
-        }
+        QiniuStorageClient { provider: provider }
     }
 
     fn req_list_buckets(&self) -> request::QiniuRequest {
@@ -26,11 +24,11 @@ impl<'a> QiniuStorageClient<'a> {
             reqwest::Method::Get,
             self.provider.hosts().rs().join("buckets").unwrap(),
             None,
-            ).unwrap()
+        ).unwrap()
     }
 
     #[cfg(feature = "async-api")]
-    pub fn list_buckets(&self) -> impl Future<Item=Vec<String>, Error=Error> {
+    pub fn list_buckets(&self) -> impl Future<Item = Vec<String>, Error = Error> {
         let req = self.req_list_buckets();
         // TODO: fix this unwrap
         let x = self.provider.execute(req).unwrap();
@@ -71,14 +69,14 @@ pub struct ListBucketEntry {
 
 
 impl<'a> QiniuStorageClient<'a> {
-    fn req_bucket_list<'b: 'a>(&'a self,
-                               bucket: Cow<'b, str>,
-                               limit: Option<usize>,
-                               prefix: Option<&'b str>,
-                               delimiter: Option<&'b str>,
-                               marker: Option<&'b str>,
-                               ) -> request::QiniuRequest
-    {
+    fn req_bucket_list<'b: 'a>(
+        &'a self,
+        bucket: Cow<'b, str>,
+        limit: Option<usize>,
+        prefix: Option<&'b str>,
+        delimiter: Option<&'b str>,
+        marker: Option<&'b str>,
+    ) -> request::QiniuRequest {
         let url = {
             let mut tmp = self.provider.hosts().rsf().join("list").unwrap();
             {
@@ -101,22 +99,18 @@ impl<'a> QiniuStorageClient<'a> {
             tmp
         };
 
-        request::QiniuRequest::new(
-            reqwest::Method::Post,
-            url,
-            None,
-            ).unwrap()
+        request::QiniuRequest::new(reqwest::Method::Post, url, None).unwrap()
     }
 
     #[cfg(feature = "async-api")]
-    pub fn bucket_list<'b: 'a>(&'a self,
-                               bucket: Cow<'b, str>,
-                               limit: Option<usize>,
-                               prefix: Option<&'b str>,
-                               delimiter: Option<&'b str>,
-                               marker: Option<&'b str>,
-                               ) -> impl Future<Item=ListResponse, Error=Error>
-    {
+    pub fn bucket_list<'b: 'a>(
+        &'a self,
+        bucket: Cow<'b, str>,
+        limit: Option<usize>,
+        prefix: Option<&'b str>,
+        delimiter: Option<&'b str>,
+        marker: Option<&'b str>,
+    ) -> impl Future<Item = ListResponse, Error = Error> {
         let req = self.req_bucket_list(bucket, limit, prefix, delimiter, marker);
         // TODO: fix this unwrap
         let x = self.provider.execute(req).unwrap();
@@ -126,14 +120,14 @@ impl<'a> QiniuStorageClient<'a> {
     }
 
     #[cfg(feature = "sync-api")]
-    pub fn bucket_list<'b: 'a>(&'a self,
-                               bucket: Cow<'b, str>,
-                               limit: Option<usize>,
-                               prefix: Option<&'b str>,
-                               delimiter: Option<&'b str>,
-                               marker: Option<&'b str>,
-                               ) -> Result<ListResponse>
-    {
+    pub fn bucket_list<'b: 'a>(
+        &'a self,
+        bucket: Cow<'b, str>,
+        limit: Option<usize>,
+        prefix: Option<&'b str>,
+        delimiter: Option<&'b str>,
+        marker: Option<&'b str>,
+    ) -> Result<ListResponse> {
         let req = self.req_bucket_list(bucket, limit, prefix, delimiter, marker);
         Ok(self.provider.execute(req)?.json()?)
     }

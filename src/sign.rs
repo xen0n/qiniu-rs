@@ -56,6 +56,9 @@ mod tests {
 
         let url = "https://rs.qiniu.com/move/bmV3ZG9jczpmaW5kX21hbi50eHQ=/bmV3ZG9jczpmaW5kLm1hbi50eHQ=";
         let url = url::Url::parse(url).unwrap();
-        assert_eq!(x.sign(&url, None), "MY_ACCESS_KEY:FXsYh0wKHYPEsIAgdPD9OfjkeEM=");
+        assert_eq!(
+            x.sign(&url, None),
+            "MY_ACCESS_KEY:FXsYh0wKHYPEsIAgdPD9OfjkeEM="
+        );
     }
 }

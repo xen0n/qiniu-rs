@@ -48,7 +48,9 @@ impl QiniuHosts {
 
 impl QiniuClient {
     pub fn new<AK, SK>(client: reqwest::Client, ak: AK, sk: SK) -> QiniuClient
-        where AK: AsRef<str>, SK: AsRef<str>
+    where
+        AK: AsRef<str>,
+        SK: AsRef<str>,
     {
         let signer = sign::QiniuSigner::new(ak, sk);
 
@@ -68,7 +70,10 @@ impl QiniuClient {
     }
 
     #[cfg(feature = "async-api")]
-    pub fn execute(&self, req: request::QiniuRequest) -> Result<impl ::futures::Future<Item=reqwest::Response, Error=reqwest::Error>> {
+    pub fn execute(
+        &self,
+        req: request::QiniuRequest,
+    ) -> Result<impl ::futures::Future<Item = reqwest::Response, Error = reqwest::Error>> {
         let ll_req = req.into_lowlevel(self)?;
 
         Ok(self.client.execute(ll_req))

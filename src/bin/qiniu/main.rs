@@ -41,7 +41,13 @@ fn main() {
             println!("list buckets response = {:?}", r);
 
             let test_bucket_name = &r[0];
-            kodo.bucket_list(Cow::Owned(test_bucket_name.to_owned()), None, None, None, None)
+            kodo.bucket_list(
+                Cow::Owned(test_bucket_name.to_owned()),
+                None,
+                None,
+                None,
+                None,
+            )
         });
         let req = req.and_then(|list| {
             println!("list inside bucket = {:?}", list);
@@ -56,7 +62,8 @@ fn main() {
     {
         let buckets = kodo.list_buckets().unwrap();
         println!("list buckets response = {:?}", buckets);
-        let list = kodo.bucket_list(Cow::Borrowed(&buckets[0]), None, None, None, None).unwrap();
+        let list = kodo.bucket_list(Cow::Borrowed(&buckets[0]), None, None, None, None)
+            .unwrap();
         println!("list inside bucket = {:?}", list);
     }
 }
