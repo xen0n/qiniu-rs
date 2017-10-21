@@ -57,7 +57,10 @@ impl<'a> QiniuStorageClient<'a> {
     }
 
     #[cfg(feature = "async-api")]
-    pub fn bucket_domains<'b: 'a>(&'a self, bucket: Cow<'b, str>) -> impl Future<Item = Vec<String>, Error = Error> {
+    pub fn bucket_domains<'b: 'a>(
+        &'a self,
+        bucket: Cow<'b, str>,
+    ) -> impl Future<Item = Vec<String>, Error = Error> {
         let req = self.req_bucket_domains(bucket);
         // TODO
         let x = self.provider.execute(req).unwrap();

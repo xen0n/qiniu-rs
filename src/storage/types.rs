@@ -167,11 +167,7 @@ pub struct PutPolicyBuilder {
 
 
 fn to_option_int(x: bool) -> Option<isize> {
-    if x {
-        Some(1)
-    } else {
-        None
-    }
+    if x { Some(1) } else { None }
 }
 
 
