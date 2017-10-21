@@ -250,3 +250,17 @@ impl PutPolicyBuilder {
 
     // TODO: remaining fields
 }
+
+
+/// Image info struct as returned by the [callback magic variable][magicvar]
+/// `imageInfo`.
+///
+/// [magicvar]: https://developer.qiniu.com/kodo/manual/1235/vars#magicvar
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ImageInfo {
+    pub format: String,
+    pub width: usize,
+    pub height: usize,
+    pub color_model: String,
+}
