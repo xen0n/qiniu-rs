@@ -199,5 +199,17 @@ impl PutPolicyBuilder {
         self.inner
     }
 
+    /// Set the redirect URL on upload success.
+    pub fn redirect_url(mut self, url: String) -> Self {
+        self.inner.redirect_url = Some(url);
+        self
+    }
+
+    /// Set the callback body on upload success.
+    pub fn return_body(mut self, body: String) -> Self {
+        self.inner.response_body_for_app_client = Some(body);
+        self
+    }
+
     // TODO: remaining fields
 }
