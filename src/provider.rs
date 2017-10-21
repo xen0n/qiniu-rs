@@ -1,3 +1,6 @@
+#[cfg(feature = "async-api")]
+use tokio_core::reactor;
+
 use url;
 
 use super::errors::*;
@@ -47,7 +50,27 @@ impl QiniuHosts {
 
 
 impl QiniuClient {
-    pub fn new<AK, SK>(client: reqwest::Client, ak: AK, sk: SK) -> QiniuClient
+    #[cfg(feature = "async-api")]
+    pub fn new<AK, SK>(handle: &reactor::Handle, ak: AK, sk: SK) -> QiniuClient
+    where
+        AK: AsRef<str>,
+        SK: AsRef<str>,
+    {
+        let client = reqwest::Client::new(handle);
+        QiniuClient::new_with_client(client, ak.as_ref(), sk.as_ref())
+    }
+
+    #[cfg(feature = "sync-api")]
+    pub fn new<AK, SK>(ak: AK, sk: SK) -> QiniuClient
+    where
+        AK: AsRef<str>,
+        SK: AsRef<str>,
+    {
+        let client = reqwest::Client::new();
+        QiniuClient::new_with_client(client, ak.as_ref(), sk.as_ref())
+    }
+
+    pub fn new_with_client<AK, SK>(client: reqwest::Client, ak: AK, sk: SK) -> QiniuClient
     where
         AK: AsRef<str>,
         SK: AsRef<str>,

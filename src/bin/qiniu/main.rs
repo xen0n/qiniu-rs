@@ -11,11 +11,6 @@ use std::env;
 #[cfg(feature = "async-api")]
 use futures::Future;
 
-#[cfg(feature = "async-api")]
-type ReqwestClient = reqwest::unstable::async::Client;
-#[cfg(feature = "sync-api")]
-type ReqwestClient = reqwest::Client;
-
 
 fn main() {
     let ak = env::var("QINIU_RS_TEST_AK").unwrap();
@@ -26,12 +21,11 @@ fn main() {
     #[cfg(feature = "async-api")]
     let handle = reactor.handle();
     #[cfg(feature = "async-api")]
-    let https = ReqwestClient::new(&handle);
+    let client = qiniu::provider::QiniuClient::new(&handle, ak, sk);
 
     #[cfg(feature = "sync-api")]
-    let https = ReqwestClient::new();
+    let client = qiniu::provider::QiniuClient::new(ak, sk);
 
-    let client = qiniu::provider::QiniuClient::new(https, ak, sk);
     let kodo = qiniu::storage::QiniuStorageClient::new(&client);
 
     #[cfg(feature = "async-api")]
