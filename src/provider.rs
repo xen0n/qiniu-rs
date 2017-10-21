@@ -70,7 +70,7 @@ impl QiniuClient {
     }
 
     #[cfg(feature = "async-api")]
-    pub fn execute(
+    pub(crate) fn execute(
         &self,
         req: request::QiniuRequest,
     ) -> Result<impl ::futures::Future<Item = reqwest::Response, Error = reqwest::Error>> {
@@ -80,7 +80,7 @@ impl QiniuClient {
     }
 
     #[cfg(feature = "sync-api")]
-    pub fn execute(&self, req: request::QiniuRequest) -> Result<reqwest::Response> {
+    pub(crate) fn execute(&self, req: request::QiniuRequest) -> Result<reqwest::Response> {
         let ll_req = req.into_lowlevel(self)?;
 
         Ok(self.client.execute(ll_req)?)
