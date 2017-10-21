@@ -201,9 +201,44 @@ impl PutPolicyBuilder {
         self
     }
 
-    /// Set the callback body on upload success.
+    /// Set the body **returned to the client** on upload success.
+    ///
+    /// For setting up callbacks to app server, please see the `callback_*`
+    /// family of builder methods.
     pub fn return_body(mut self, body: String) -> Self {
         self.inner.response_body_for_app_client = Some(body);
+        self
+    }
+
+    /// Set the callback URL(s) **to your app server** on upload success.
+    pub fn callback_url(mut self, urls: String) -> Self {
+        self.inner.request_url_for_app_server = Some(urls);
+        self
+    }
+
+    /// Set the `Host` name for callback requests.
+    pub fn callback_host(mut self, host: String) -> Self {
+        self.inner.request_host_for_app_server = Some(host);
+        self
+    }
+
+    /// Set the callback body template.
+    ///
+    /// Please consult the Qiniu docs for details on setting up this.
+    pub fn callback_body(mut self, body: String) -> Self {
+        self.inner.request_body_for_app_server = Some(body);
+        self
+    }
+
+    /// Receive the callback body in URL-encoded forms. This is the default.
+    pub fn callback_type_form(mut self) -> Self {
+        self.inner.request_body_type_for_app_server = None;
+        self
+    }
+
+    /// Receive the callback body in JSON.
+    pub fn callback_type_json(mut self) -> Self {
+        self.inner.request_body_type_for_app_server = Some("application/json".to_owned());
         self
     }
 
