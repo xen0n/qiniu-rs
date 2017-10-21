@@ -195,6 +195,12 @@ impl PutPolicyBuilder {
         self.inner
     }
 
+    /// Set the end user ID for the upload.
+    pub fn end_user_id(mut self, end_user_id: String) -> Self {
+        self.inner.end_user_id = Some(end_user_id);
+        self
+    }
+
     /// Set the redirect URL on upload success.
     pub fn redirect_url(mut self, url: String) -> Self {
         self.inner.redirect_url = Some(url);
