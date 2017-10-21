@@ -42,6 +42,35 @@ impl<'a> QiniuStorageClient<'a> {
         let req = self.req_list_buckets();
         Ok(self.provider.execute(req)?.json()?)
     }
+
+    fn req_bucket_domains<'b: 'a>(&'a self, bucket: Cow<'b, str>) -> request::QiniuRequest {
+        let url = {
+            let mut tmp = self.provider.hosts().api().join("v6/domain/list").unwrap();
+            {
+                let mut qs = tmp.query_pairs_mut();
+                qs.append_pair("tbl", bucket.as_ref());
+            }
+            tmp
+        };
+
+        request::QiniuRequest::new(reqwest::Method::Get, url, None).unwrap()
+    }
+
+    #[cfg(feature = "async-api")]
+    pub fn bucket_domains<'b: 'a>(&'a self, bucket: Cow<'b, str>) -> impl Future<Item = Vec<String>, Error = Error> {
+        let req = self.req_bucket_domains(bucket);
+        // TODO
+        let x = self.provider.execute(req).unwrap();
+        let x = x.and_then(|mut x| x.json()).map_err(|e| e.into());
+
+        x
+    }
+
+    #[cfg(feature = "sync-api")]
+    pub fn bucket_domains<'b: 'a>(&'a self, bucket: Cow<'b, str>) -> Result<Vec<String>> {
+        let req = self.req_bucket_domains(bucket);
+        Ok(self.provider.execute(req)?.json()?)
+    }
 }
 
 

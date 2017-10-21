@@ -40,17 +40,23 @@ fn main() {
         let req = req.and_then(|r| {
             println!("list buckets response = {:?}", r);
 
-            let test_bucket_name = &r[0];
+            let test_bucket_name = r[0].to_owned();
             kodo.bucket_list(
-                Cow::Owned(test_bucket_name.to_owned()),
+                Cow::Owned(test_bucket_name.clone()),
                 None,
                 None,
                 None,
                 None,
-            )
+            ).map(move |l| (test_bucket_name, l))
         });
-        let req = req.and_then(|list| {
+        let req = req.and_then(|(bkt, list)| {
             println!("list inside bucket = {:?}", list);
+
+            kodo.bucket_domains(Cow::Owned(bkt.clone()))
+                .map(|l| (bkt, l))
+        });
+        let req = req.and_then(|(bkt, domains)| {
+            println!("domains of bucket {}: {:?}", bkt, domains);
 
             Ok(())
         });
@@ -65,5 +71,7 @@ fn main() {
         let list = kodo.bucket_list(Cow::Borrowed(&buckets[0]), None, None, None, None)
             .unwrap();
         println!("list inside bucket = {:?}", list);
+        let domains = kodo.bucket_domains(Cow::Borrowed(&buckets[0])).unwrap();
+        println!("domains of bucket {}: {:?}", &buckets[0], domains);
     }
 }
