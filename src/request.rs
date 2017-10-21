@@ -38,7 +38,7 @@ impl QiniuRequest {
             let signer = client.signer();
             let mut tmp = String::from("QBox ");
             // this clone is lightweight (maybe? due to the Arc inside)
-            let auth = signer.sign(&self.uri, self.body.clone().as_ref().map(|buf| &buf[..]));
+            let auth = signer.sign_req(&self.uri, self.body.clone().as_ref().map(|buf| &buf[..]));
             tmp.push_str(&auth);
             tmp
         };
