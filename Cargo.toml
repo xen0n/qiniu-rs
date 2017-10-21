@@ -8,6 +8,10 @@ default = ["async-api"]
 async-api = []
 sync-api = []
 
+[[bin]]
+name = "qiniu"
+doc = false
+
 [dependencies]
 base64 = "0.7.0"
 bytes = "0.4.5"
