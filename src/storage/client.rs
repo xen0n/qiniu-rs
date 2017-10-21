@@ -7,6 +7,7 @@ use super::super::errors::*;
 use super::super::provider;
 use super::super::request;
 use super::super::reqwest_compat as reqwest;
+use super::types;
 
 
 pub struct QiniuStorageClient<'a> {
@@ -19,6 +20,15 @@ impl<'a> QiniuStorageClient<'a> {
         QiniuStorageClient { provider: provider }
     }
 
+    // Flavor-agnostic APIs.
+
+    pub fn upload_token(&self, put_policy: types::PutPolicy) -> String {
+        put_policy.into_upload_token(self.provider.signer())
+    }
+}
+
+
+impl<'a> QiniuStorageClient<'a> {
     fn req_list_buckets(&self) -> request::QiniuRequest {
         request::QiniuRequest::new(
             reqwest::Method::Get,
