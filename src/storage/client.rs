@@ -52,7 +52,72 @@ impl<'a> QiniuStorageClient<'a> {
         let req = self.req_list_buckets();
         Ok(self.provider.execute(req)?.json()?)
     }
+}
 
+
+/// Type for domains associated with buckets.
+///
+/// See [the Fusion CDN developer docs][domains] for details.
+///
+/// [domains]: https://developer.qiniu.com/fusion/kb/1319/test-domain-access-restriction-rules
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
+pub enum BucketDomain {
+    /// Test domain automatically provisioned on bucket creation.
+    ///
+    /// The domain has limited concurrency, speed, and transfer quotas, and as
+    /// such is only meant for testing.
+    TestDomain(String),
+    /// Domain backed by Qiniu Fusion CDN, suitable for production uses.
+    FusionDomain(String),
+}
+
+
+impl BucketDomain {
+    /// Returns if the domain is meant for testing only, i.e. unsuitable for
+    /// production use.
+    pub fn is_test_domain(&self) -> bool {
+        match self {
+            &BucketDomain::TestDomain(_) => true,
+            &BucketDomain::FusionDomain(_) => false,
+        }
+    }
+}
+
+
+impl From<String> for BucketDomain {
+    fn from(x: String) -> Self {
+        if x.ends_with("bkt.clouddn.com") {
+            BucketDomain::TestDomain(x)
+        } else {
+            BucketDomain::FusionDomain(x)
+        }
+    }
+}
+
+
+impl Into<String> for BucketDomain {
+    fn into(self) -> String {
+        match self {
+            BucketDomain::TestDomain(x) => x,
+            BucketDomain::FusionDomain(x) => x,
+        }
+    }
+}
+
+
+impl ::std::ops::Deref for BucketDomain {
+    type Target = str;
+
+    fn deref(&self) -> &str {
+        match self {
+            &BucketDomain::TestDomain(ref x) => x,
+            &BucketDomain::FusionDomain(ref x) => x,
+        }
+    }
+}
+
+
+impl<'a> QiniuStorageClient<'a> {
     fn req_bucket_domains<'b: 'a>(&'a self, bucket: Cow<'b, str>) -> request::QiniuRequest {
         let url = {
             let mut tmp = self.provider.hosts().api().join("v6/domain/list").unwrap();
@@ -70,19 +135,24 @@ impl<'a> QiniuStorageClient<'a> {
     pub fn bucket_domains<'b: 'a>(
         &'a self,
         bucket: Cow<'b, str>,
-    ) -> impl Future<Item = Vec<String>, Error = Error> {
+    ) -> impl Future<Item = Vec<BucketDomain>, Error = Error> {
         let req = self.req_bucket_domains(bucket);
         // TODO
         let x = self.provider.execute(req).unwrap();
-        let x = x.and_then(|mut x| x.json()).map_err(|e| e.into());
+        let x = x.and_then(|mut x| {
+            x.json().map(|l: Vec<String>| {
+                l.into_iter().map(|d| d.into()).collect()
+            })
+        }).map_err(|e| e.into());
 
         x
     }
 
     #[cfg(feature = "sync-api")]
-    pub fn bucket_domains<'b: 'a>(&'a self, bucket: Cow<'b, str>) -> Result<Vec<String>> {
+    pub fn bucket_domains<'b: 'a>(&'a self, bucket: Cow<'b, str>) -> Result<Vec<BucketDomain>> {
         let req = self.req_bucket_domains(bucket);
-        Ok(self.provider.execute(req)?.json()?)
+        let resp: Vec<String> = self.provider.execute(req)?.json()?;
+        Ok(resp.into_iter().map(|d| d.into()).collect())
     }
 }
 
