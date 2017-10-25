@@ -176,7 +176,7 @@ pub struct ListBucketEntry {
     pub mime_type: String,
     #[serde(rename = "type")]
     pub type_: usize,
-    pub end_user: String,
+    pub end_user: Option<String>,
 }
 
 
